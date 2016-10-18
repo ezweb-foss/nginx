@@ -3,7 +3,6 @@ FROM alpine:3.3
 MAINTAINER KhanhIceTea "khanh.nd@ezweb.com.vn"
 
 ENV NGINX_VERSION 1.10.1
-ENV NGINX_CACHE_PURGE_VERSION 2.3
 
 ENV GPG_KEYS B0F4253373F8F6F510D42178520A9993A1C052F8
 ENV CONFIG "\
@@ -20,8 +19,8 @@ ENV CONFIG "\
     --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
     --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
     --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
-    --user=nginx \
-    --group=nginx \
+    --user=www-data \
+    --group=www-data \
     --with-http_ssl_module \
     --with-http_realip_module \
     --with-http_flv_module \
@@ -40,12 +39,11 @@ ENV CONFIG "\
     --with-http_slice_module \
     --with-file-aio \
     --with-http_v2_module \
-    --add-module=/usr/src/ngx_cache_purge-$NGINX_CACHE_PURGE_VERSION \
     "
 
 RUN \
-    addgroup -S nginx \
-    && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
+    addgroup -S www-data \
+    && adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G www-data www-data \
     && apk add --no-cache --virtual .build-deps \
         gcc \
         libc-dev \
@@ -66,12 +64,9 @@ RUN \
     && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$GPG_KEYS" \
     && gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
     && rm -r "$GNUPGHOME" nginx.tar.gz.asc \
-    && curl -fSL https://github.com/FRiCKLE/ngx_cache_purge/archive/$NGINX_CACHE_PURGE_VERSION.tar.gz -o ngx_cache_purge.tar.gz \
     && mkdir -p /usr/src \
     && tar -zxC /usr/src -f nginx.tar.gz \
     && rm nginx.tar.gz \
-    && tar -zxC /usr/src -f ngx_cache_purge.tar.gz \
-    && rm ngx_cache_purge.tar.gz \
     && cd /usr/src/nginx-$NGINX_VERSION \
     && ./configure $CONFIG --with-debug \
     && make \
@@ -106,7 +101,6 @@ RUN \
     && apk add --virtual .nginx-rundeps $runDeps \
     && apk del .build-deps \
     && rm -rf /usr/src/nginx-$NGINX_VERSION \
-    && rm -rf /usr/src/ngx_cache_purge-$NGINX_CACHE_PURGE_VERSION \
     && apk add --no-cache gettext \
     \
     # forward request and error logs to docker log collector
