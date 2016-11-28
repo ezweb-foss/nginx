@@ -109,6 +109,7 @@ RUN \
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
+COPY 404.html /usr/share/nginx/html/404.html
 
 EXPOSE 80 443
 
